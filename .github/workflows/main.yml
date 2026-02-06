@@ -2,7 +2,7 @@ name: Build Test and push
 on: [push]
 env:
   IMAGE_NAME: student_service
-  REPO_NAME: restful-docker-and-k8s
+  REPO_NAME: ${{ secrets.REGISTRY_USERNAME }}
 
 
 jobs:
