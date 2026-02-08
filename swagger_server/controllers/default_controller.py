@@ -3,15 +3,21 @@ import connexion
 # Import the Student model so the controller can use it
 from swagger_server.models.student import Student
 
-def add_student(body=None):
-    """Add a new student..."""
+def add_student(body=None):  # noqa: E501
+    """Add a new student
+
+    Adds an item to the system # noqa: E501
+
+    :param body: Student item to add
+    :type body: dict | bytes
+
+    :rtype: float
+    """
     if connexion.request.is_json:
-        # Now 'Student' is defined and this will work
-        body = Student.from_dict(connexion.request.get_json())
+        body = Student.from_dict(connexion.request.get_json())  # noqa: E501
         return add(body)
-    return 500, 'error'
-
-
+    return 500,'error'
+    
 def delete_student(student_id):  # noqa: E501
     """deletes a student
 
