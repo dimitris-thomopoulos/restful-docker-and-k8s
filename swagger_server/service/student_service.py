@@ -1,41 +1,64 @@
-import os
-import tempfile
-from functools import reduce
+# coding: utf-8
+"""Student service using MongoDB."""
+from pymongo import MongoClient
+from pymongo.errors import DuplicateKeyError
 
-from tinydb import TinyDB, Query
+from swagger_server.config import MONGO_URI, MONGO_DB_NAME
 
-db_dir_path = tempfile.gettempdir()
-db_file_path = os.path.join(db_dir_path, "students.json")
-student_db = TinyDB(db_file_path)
+_COLLECTION = "students"
+
+_client = MongoClient(MONGO_URI)
+_db = _client[MONGO_DB_NAME]
+student_collection = _db[_COLLECTION]
 
 
 def add(student=None):
-    queries = []
-    query = Query()
-    queries.append(query.first_name == student.first_name)
-    queries.append(query.last_name == student.last_name)
-    query = reduce(lambda a, b: a & b, queries)
-    res = student_db.search(query)
-    if res:
+    if student is None:
+        return 'invalid', 400
+    doc = student.to_dict()
+    # Remove student_id for insert; we use _id as the numeric id
+    doc.pop('student_id', None)
+    # Get next id: max(_id) + 1
+    cursor = student_collection.find({}).sort("_id", -1).limit(1)
+    next_id = 1
+    for d in cursor:
+        next_id = d["_id"] + 1
+        break
+    doc["_id"] = next_id
+    # Check duplicate by first_name + last_name
+    if student_collection.find_one({"first_name": student.first_name, "last_name": student.last_name}):
         return 'already exists', 409
-
-    doc_id = student_db.insert(student.to_dict())
-    student.student_id = doc_id
+    try:
+        student_collection.insert_one(doc)
+    except DuplicateKeyError:
+        return 'already exists', 409
+    student.student_id = next_id
     return student.student_id
 
 
 def get_by_id(student_id=None, subject=None):
-    student = student_db.get(doc_id=int(student_id))
+    if student_id is None:
+        return 'not found', 404
+    try:
+        sid = int(student_id)
+    except (TypeError, ValueError):
+        return 'not found', 404
+    student = student_collection.find_one({"_id": sid})
     if not student:
         return 'not found', 404
-    student['student_id'] = student_id
-    print(student)
+    # Return dict with student_id (API expects student_id, not _id in response)
+    student["student_id"] = student.pop("_id")
     return student
 
 
 def delete(student_id=None):
-    student = student_db.get(doc_id=int(student_id))
-    if not student:
+    if student_id is None:
         return 'not found', 404
-    student_db.remove(doc_ids=[int(student_id)])
+    try:
+        sid = int(student_id)
+    except (TypeError, ValueError):
+        return 'not found', 404
+    result = student_collection.delete_one({"_id": sid})
+    if result.deleted_count == 0:
+        return 'not found', 404
     return student_id
