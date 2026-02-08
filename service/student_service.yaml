@@ -38,8 +38,6 @@ spec:
       - env:
         - name: MONGO_URI
           value: mongodb://mongo:27017
-        - name: MONGO_DB_NAME
-          value: student_db
         image: dimitristho/student_service
         name: service
         imagePullPolicy: Always

@@ -1,14 +1,12 @@
 version: '3'
 services:
   student_service:
-    build: .
-    image: dimitristho/student_service
+    image: nginx
     restart: unless-stopped
     depends_on:
       - mongo
     environment:
       MONGO_URI: mongodb://mongo:27017
-      MONGO_DB_NAME: student_db
     ports:
       - "8080:8080"
 
@@ -17,8 +15,3 @@ services:
     image: mongo:4
     ports:
       - "27017:27017"
-    volumes:
-      - mongo-data:/data/db
-
-volumes:
-  mongo-data:
