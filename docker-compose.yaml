@@ -1,0 +1,21 @@
+# Replace the image below with your own Docker Hub image (e.g. yourusername/student_service)
+# Build locally first: docker build -t dimitristho/student_service .
+# Then: docker-compose up -d
+version: "3"
+services:
+  student_service:
+    image: dimitristho/student_service
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    environment:
+      MONGO_URI: mongodb://mongo:27017
+      MONGO_DB_NAME: student_db
+    ports:
+      - "8080:8080"
+
+  mongo:
+    restart: unless-stopped
+    image: mongo:4
+    ports:
+      - "27017:27017"
